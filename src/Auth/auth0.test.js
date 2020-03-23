@@ -7,7 +7,7 @@ describe('Auth0', () => {
   let auth0;
 
   const audience = 'http://localhost:3000/api';
-  const domain = 'ollieorder-staging.auth0.com';
+  const domain = 'keingsw.auth0.com';
   const clientId = '123';
   const redirectUri = 'http://localhost:3000/auth/callback';
   const scope = 'openid profile email';
@@ -185,7 +185,7 @@ describe('Auth0', () => {
     });
   });
 
-  describe('renewSession', () => {
+  describe('renewSession()', () => {
     const mockCheckSessionImplementation = (authError, authResult) => {
       return (o, cb) => {
         cb(authError, authResult);
