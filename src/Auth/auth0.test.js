@@ -61,7 +61,7 @@ describe('Auth0', () => {
       expect(mockWebAuth).toHaveBeenCalledWith({
         audience,
         domain,
-        clientId: clientId,
+        clientID: clientId,
         redirectUri: redirectUri,
         scope: scope,
         responseType: 'token id_token',

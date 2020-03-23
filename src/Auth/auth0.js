@@ -12,7 +12,7 @@ export default class Auth0 {
     this.webAuth = new WebAuth({
       domain,
       audience,
-      clientId,
+      clientID: clientId,
       redirectUri,
       scope,
       responseType: 'token id_token',
