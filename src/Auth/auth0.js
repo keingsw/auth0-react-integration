@@ -50,6 +50,7 @@ export default class Auth0 {
         if (authError || !authResult.idToken || !authResult.accessToken) {
           console.error('[Auth0] error renewing session', authError);
           reject(authError);
+          this.logout();
         }
 
         console.debug('[Auth0] renewed session successfully');

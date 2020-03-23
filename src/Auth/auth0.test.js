@@ -259,6 +259,7 @@ describe('Auth0', () => {
     });
 
     describe('on error', () => {
+      const mockLogout = jest.fn();
       beforeEach(() => {
         mockWebAuth.mockImplementationOnce(() => {
           return {
@@ -269,6 +270,7 @@ describe('Auth0', () => {
           };
         });
         initializeAuth0();
+        auth0.logout = mockLogout;
       });
 
       test('rejects adn provides the auth error', async () => {
@@ -287,6 +289,18 @@ describe('Auth0', () => {
           );
         }
       });
+
+      test('calls logout', async () => {
+        expect.assertions(1);
+        try {
+          await auth0.renewSession();
+        } catch (error) {
+          expect(mockLogout).toHaveBeenCalledWith();
+        }
+      });
+    });
+  });
+
   describe('logout()', () => {
     const logout = jest.fn();
     const mockLogoutImplementation = authError => {
