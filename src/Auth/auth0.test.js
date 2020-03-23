@@ -11,6 +11,7 @@ describe('Auth0', () => {
   const clientId = '123';
   const redirectUri = 'http://localhost:3000/auth/callback';
   const scope = 'openid profile email';
+  const logoutRedirectUri = 'http://localhost:3000/';
 
   const successfulAuthError = null;
   const successfulAuthResult = {
@@ -29,7 +30,14 @@ describe('Auth0', () => {
   const mockWebAuth = WebAuth;
 
   const initializeAuth0 = () => {
-    auth0 = new Auth0({ audience, domain, clientId, redirectUri, scope });
+    auth0 = new Auth0({
+      audience,
+      domain,
+      clientId,
+      redirectUri,
+      scope,
+      logoutRedirectUri,
+    });
   };
 
   const mockParseHashImplementation = (error, result) => {
@@ -278,6 +286,96 @@ describe('Auth0', () => {
             failedAuthError
           );
         }
+      });
+  describe('logout()', () => {
+    const logout = jest.fn();
+    const mockLogoutImplementation = authError => {
+      return (o, cb) => cb(authError);
+    };
+
+    beforeEach(() => {
+      mockWebAuth.mockImplementationOnce(() => {
+        return {
+          parseHash: mockParseHashImplementation(
+            successfulAuthError,
+            successfulAuthResult
+          ),
+          logout,
+        };
+      });
+
+      initializeAuth0();
+      auth0.handleAuthentication();
+    });
+
+    test('performs a log-out from auth0 providing redirect URI', () => {
+      auth0.logout();
+      expect(logout).toHaveBeenCalledWith(
+        { returnTo: logoutRedirectUri },
+        expect.any(Function)
+      );
+    });
+
+    test('resets accessToken', () => {
+      expect(auth0.accessToken).toBe('abc');
+      auth0.logout();
+      expect(auth0.accessToken).toBe(undefined);
+    });
+
+    test('resets expiresAt', () => {
+      expect(auth0.expiresAt).toBeTruthy();
+      auth0.logout();
+      expect(auth0.expiresAt).toBe(undefined);
+    });
+
+    test('resets userInfo', () => {
+      expect(auth0.userInfo).toEqual({
+        email: 'test@example.com',
+        email_verified: true,
+      });
+      auth0.logout();
+      expect(auth0.userInfo).toBe(undefined);
+    });
+
+    describe('on success', () => {
+      beforeEach(() => {
+        mockWebAuth.mockImplementationOnce(() => {
+          return {
+            logout: mockLogoutImplementation(),
+          };
+        });
+        initializeAuth0();
+      });
+
+      test('calls a success callback when provided', () => {
+        const onSuccess = jest.fn();
+        auth0.logout(onSuccess);
+        expect(onSuccess).toHaveBeenCalled();
+      });
+    });
+
+    describe('on error', () => {
+      beforeEach(() => {
+        mockWebAuth.mockImplementationOnce(() => {
+          return {
+            logout: mockLogoutImplementation(failedAuthError),
+          };
+        });
+        initializeAuth0();
+      });
+
+      test('logs an error', () => {
+        auth0.logout();
+        expect(console.error).toHaveBeenCalledWith(
+          '[Auth0] error logging out',
+          failedAuthError
+        );
+      });
+
+      test('does not call a success callback when provided', () => {
+        const onSuccess = jest.fn();
+        auth0.logout(onSuccess);
+        expect(onSuccess).not.toHaveBeenCalled();
       });
     });
   });

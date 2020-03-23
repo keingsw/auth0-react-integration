@@ -1,7 +1,14 @@
 import { WebAuth } from 'auth0-js';
 
 export default class Auth0 {
-  constructor({ domain, audience, clientId, redirectUri, scope }) {
+  constructor({
+    domain,
+    audience,
+    clientId,
+    redirectUri,
+    scope,
+    logoutRedirectUri,
+  }) {
     this.webAuth = new WebAuth({
       domain,
       audience,
@@ -10,6 +17,7 @@ export default class Auth0 {
       scope,
       responseType: 'token id_token',
     });
+    this.logoutRedirectUri = logoutRedirectUri;
   }
 
   login() {
@@ -49,6 +57,28 @@ export default class Auth0 {
         resolve(authResult);
       });
     });
+  }
+
+  logout(onSuccess) {
+    delete this.accessToken;
+    delete this.userInfo;
+    delete this.expiresAt;
+
+    this.webAuth.logout(
+      {
+        returnTo: this.logoutRedirectUri,
+      },
+      authError => {
+        if (authError) {
+          console.error('[Auth0] error logging out', authError);
+          return;
+        }
+
+        if (onSuccess) {
+          onSuccess();
+        }
+      }
+    );
   }
 
   setSession({ accessToken, idTokenPayload, expiresIn }) {
