@@ -11,4 +11,9 @@ export default class Auth0 {
       responseType: 'token id_token',
     });
   }
+
+  login() {
+    console.debug('[Auth0] login');
+    this.webAuth.authorize();
+  }
 }

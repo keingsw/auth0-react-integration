@@ -40,4 +40,16 @@ describe('Auth0', () => {
       });
     });
   });
+
+  describe('login()', () => {
+    test('logs a debug message', () => {
+      auth0.login();
+      expect(console.debug).toHaveBeenCalledWith('[Auth0] login');
+    });
+
+    test('initiates authrozation redirect with auth0', () => {
+      auth0.login();
+      expect(mockWebAuth.mock.instances[0].authorize).toHaveBeenCalledWith();
+    });
+  });
 });
