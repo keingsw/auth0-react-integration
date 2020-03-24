@@ -90,6 +90,10 @@ export default class Auth0 {
     return !!this.accessToken && !this.isTokenExpired();
   }
 
+  hasExpiredToken() {
+    return !!this.accessToken && this.isTokenExpired();
+  }
+
   isAuthenticated() {
     return this.hasValidToken() && !!this.userInfo;
   }
