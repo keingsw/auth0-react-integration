@@ -1,7 +1,10 @@
 import React from 'react';
+import { Route, Switch } from 'react-router-dom';
 import { AuthContextProvider } from 'Auth';
+import HomePage from 'components/HomePage';
+import Callback from 'components/Callback';
 
-function App() {
+export default () => {
   const {
     REACT_APP_AUTH0_DOMAIN,
     REACT_APP_AUTH0_API_AUDIENCE,
@@ -19,9 +22,12 @@ function App() {
       scope="openid profile email"
       logoutRedirectUri={REACT_APP_AUTH0_LOGOUT_REDIRECT_URI}
     >
-      <div>app</div>
+      <div data-testid="app-component">
+        <Switch>
+          <Route path="/callback" component={Callback} />
+          <Route exact path="/" component={HomePage} />
+        </Switch>
+      </div>
     </AuthContextProvider>
   );
-}
-
-export default App;
+};
