@@ -82,6 +82,18 @@ export default class Auth0 {
     );
   }
 
+  isTokenExpired() {
+    return this.expiresAt < new Date().getTime();
+  }
+
+  hasValidToken() {
+    return !!this.accessToken && !this.isTokenExpired();
+  }
+
+  isAuthenticated() {
+    return this.hasValidToken() && !!this.userInfo;
+  }
+
   setSession({ accessToken, idTokenPayload, expiresIn }) {
     console.debug(`[Auth0] token expires in ${expiresIn} seconds`);
     this.accessToken = accessToken;

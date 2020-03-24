@@ -393,4 +393,70 @@ describe('Auth0', () => {
       });
     });
   });
+
+  describe('helpers', () => {
+    let mutableAuth0;
+
+    beforeEach(() => {
+      mutableAuth0 = auth0;
+    });
+
+    describe('isTokenExpired()', () => {
+      test('returns true when expiryAt is in the past', () => {
+        mutableAuth0.expiresAt = Date.now() - 24 * 60 * 60 * 1000;
+        expect(mutableAuth0.isTokenExpired()).toBe(true);
+      });
+      test('returns false when expiryAt is in the future', () => {
+        mutableAuth0.expiresAt = Date.now() + 24 * 60 * 60 * 1000;
+        expect(mutableAuth0.isTokenExpired()).toBe(false);
+      });
+    });
+    describe('hasValidToken()', () => {
+      test('returns false if there is no token', () => {
+        mutableAuth0.accessToken = undefined;
+        expect(mutableAuth0.hasValidToken()).toBe(false);
+      });
+
+      test('returns false if there is a token but it is expired', () => {
+        mutableAuth0.accessToken = '123';
+        mutableAuth0.expiresAt = Date.now() - 24 * 60 * 60 * 1000;
+        expect(mutableAuth0.hasValidToken()).toBe(false);
+      });
+
+      test('return strue if there is a valid token', () => {
+        mutableAuth0.accessToken = '123';
+        mutableAuth0.expiresAt = Date.now() + 24 * 60 * 60 * 1000;
+        expect(mutableAuth0.hasValidToken()).toBe(true);
+      });
+    });
+    describe('isAuthenticated()', () => {
+      test('returns false if there is no token', () => {
+        mutableAuth0.accessToken = undefined;
+        expect(mutableAuth0.isAuthenticated()).toBe(false);
+      });
+
+      test('returns false if there is a token but it is expired', () => {
+        mutableAuth0.accessToken = '123';
+        mutableAuth0.expiresAt = Date.now() - 24 * 60 * 60 * 1000;
+        expect(mutableAuth0.isAuthenticated()).toBe(false);
+      });
+
+      test('returns false if there is a valid token but no userInfo', () => {
+        mutableAuth0.accessToken = '123';
+        mutableAuth0.expiresAt = Date.now() + 24 * 60 * 60 * 1000;
+        mutableAuth0.userInfo = undefined;
+        expect(mutableAuth0.isAuthenticated()).toBe(false);
+      });
+
+      test('return strue if there is a valid token and userInfo', () => {
+        mutableAuth0.accessToken = '123';
+        mutableAuth0.expiresAt = Date.now() + 24 * 60 * 60 * 1000;
+        mutableAuth0.userInfo = {
+          email: 'test@example.com',
+          email_verified: true,
+        };
+        expect(mutableAuth0.isAuthenticated()).toBe(true);
+      });
+    });
+  });
 });
