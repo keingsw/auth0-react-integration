@@ -23,13 +23,18 @@ export const AuthContextProvider = ({ children, ...props }) => {
     })
   ).current;
 
-  const getCurrentToken = () => {
+  const getCurrentToken = async () => {
+    if (auth.hasExpiredToken()) {
+      await auth.renewSession();
+      return auth.accessToken;
+    }
+
     return auth.accessToken;
   };
 
   return (
     <AuthContext.Provider
-      values={{
+      value={{
         getCurrentToken: getCurrentToken,
       }}
     >
