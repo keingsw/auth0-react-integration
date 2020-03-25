@@ -2,7 +2,7 @@ import React from 'react';
 import { render } from '@testing-library/react';
 import { renderHook, act } from '@testing-library/react-hooks';
 import Auth0 from './auth0';
-import { AuthContextProvider } from './hooks';
+import { AuthContextProvider, useAuthContext } from './hooks';
 
 jest.mock('./auth0');
 
