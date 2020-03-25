@@ -72,6 +72,7 @@ describe('value', () => {
       mockAuth0.mockImplementationOnce(() => ({
         hasExpiredToken,
         accessToken,
+        getAccessToken: () => (accessToken ? accessToken : null),
         renewSession: mockRenewSession,
       }));
     };
@@ -81,14 +82,14 @@ describe('value', () => {
     });
 
     describe('without a token', () => {
-      test('returns undefined without calling renewSession', async () => {
+      test('returns null without calling renewSession', async () => {
         expect.assertions(2);
 
         const hasExpiredToken = () => false;
         mockAuth0Implementation({ hasExpiredToken });
 
         const result = renderAuthContextProviderHooks();
-        await expect(result.current.getCurrentToken()).resolves.toBe(undefined);
+        await expect(result.current.getCurrentToken()).resolves.toBe(null);
         expect(mockRenewSession).not.toHaveBeenCalled();
       });
     });

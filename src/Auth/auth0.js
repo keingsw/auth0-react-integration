@@ -104,4 +104,20 @@ export default class Auth0 {
     this.userInfo = idTokenPayload;
     this.expiresAt = expiresIn * 1000 + new Date().getTime();
   }
+
+  getAccessToken() {
+    return !!this.accessToken ? this.accessToken : null;
+  }
+
+  getUserId() {
+    return !!this.userInfo && !!this.userInfo.user_id
+      ? this.userInfo.user_id
+      : null;
+  }
+
+  getPermissions() {
+    return !!this.userInfo && !!this.userInfo.permissions
+      ? this.userInfo.permissions
+      : [];
+  }
 }

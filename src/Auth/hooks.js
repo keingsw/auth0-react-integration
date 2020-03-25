@@ -26,10 +26,12 @@ export const AuthContextProvider = ({ children, ...props }) => {
   const getCurrentToken = async () => {
     if (auth.hasExpiredToken()) {
       await auth.renewSession();
-      return auth.accessToken;
+      return auth.getAccessToken();
     }
 
-    return auth.accessToken;
+    return auth.getAccessToken();
+  };
+
   };
 
   return (

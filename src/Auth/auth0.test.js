@@ -475,4 +475,52 @@ describe('Auth0', () => {
       });
     });
   });
+
+  describe('accessors', () => {
+    let mutableAuth0;
+
+    beforeEach(() => {
+      mutableAuth0 = auth0;
+    });
+
+    describe('getAccessToken()', () => {
+      test('returns the accessToken', () => {
+        mutableAuth0.accessToken = 'abc';
+        expect(mutableAuth0.getAccessToken()).toBe('abc');
+      });
+      test('returns null when there is no accessToken', () => {
+        mutableAuth0.accessToken = undefined;
+        expect(mutableAuth0.getAccessToken()).toBe(null);
+      });
+    });
+
+    describe('getUserId()', () => {
+      test('returns the user_id from userInfo', () => {
+        mutableAuth0.userInfo = { email: 'test@example.com', user_id: 'xyz' };
+        expect(mutableAuth0.getUserId()).toBe('xyz');
+      });
+      test('returns null when there is no userInfo', () => {
+        mutableAuth0.userInfo = undefined;
+        expect(mutableAuth0.getUserId()).toBe(null);
+      });
+    });
+
+    describe('getPermissions()', () => {
+      test('returns the permissions from userInfo', () => {
+        mutableAuth0.userInfo = {
+          email: 'test@example.com',
+          user_id: 'xyz',
+          permissions: ['get:xxx'],
+        };
+        expect(mutableAuth0.getPermissions()).toEqual(['get:xxx']);
+      });
+      test('returns empty array when there is no userInfo', () => {
+        mutableAuth0.userInfo = {
+          email: 'test@example.com',
+          user_id: 'xyz',
+        };
+        expect(mutableAuth0.getPermissions()).toEqual([]);
+      });
+    });
+  });
 });
