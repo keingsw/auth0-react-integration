@@ -32,12 +32,25 @@ export const AuthContextProvider = ({ children, ...props }) => {
     return auth.getAccessToken();
   };
 
+  const login = async () => {
+    auth.login();
+  };
+
+  const logout = async onSuccess => {
+    auth.logout(onSuccess);
+  };
+
+  const handleAuthCallback = async () => {
+    auth.handleAuthentication();
   };
 
   return (
     <AuthContext.Provider
       value={{
         getCurrentToken: getCurrentToken,
+        login: login,
+        logout: logout,
+        handleAuthCallback: handleAuthCallback,
       }}
     >
       {children}

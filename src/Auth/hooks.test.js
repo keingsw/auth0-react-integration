@@ -121,6 +121,45 @@ describe('value', () => {
         expect(mockRenewSession).toHaveBeenCalled();
       });
     });
+  });
+
+  describe('login()', () => {
+    const mockLogin = jest.fn();
+    test('performs auth login', async () => {
+      mockAuth0.mockImplementationOnce(() => ({
+        login: mockLogin,
+      }));
+      const result = renderAuthContextProviderHooks();
+      await result.current.login();
+      expect(mockLogin).toHaveBeenCalled();
+    });
+  });
+
+  describe('logout()', () => {
+    const mockLogout = jest.fn();
+    test('performs auth login', async () => {
+      mockAuth0.mockImplementationOnce(() => ({
+        logout: mockLogout,
+      }));
+      const result = renderAuthContextProviderHooks();
+      await result.current.logout();
+      expect(mockLogout).toHaveBeenCalled();
+    });
+  });
+
+  describe('handleAuthentication()', () => {
+    const mockHandleAuthentication = jest.fn();
+
+    test('performs handleAuthentication', async () => {
+      mockAuth0.mockImplementationOnce(() => ({
+        handleAuthentication: mockHandleAuthentication,
+        userInfo: { user_id: 'xyz' },
+      }));
+      const result = renderAuthContextProviderHooks();
+
+      await result.current.handleAuthCallback();
+      expect(mockHandleAuthentication).toHaveBeenCalled();
+    });
 
   });
 });
