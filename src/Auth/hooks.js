@@ -32,6 +32,10 @@ export const AuthContextProvider = ({ children, ...props }) => {
     return auth.getAccessToken();
   };
 
+  const getCurrentUserId = () => {
+    return auth.hasValidToken() ? auth.getUserId() : null;
+  };
+
   const login = async () => {
     auth.login();
   };
@@ -48,6 +52,7 @@ export const AuthContextProvider = ({ children, ...props }) => {
     <AuthContext.Provider
       value={{
         getCurrentToken: getCurrentToken,
+        getCurrentUserId: getCurrentUserId,
         login: login,
         logout: logout,
         handleAuthCallback: handleAuthCallback,

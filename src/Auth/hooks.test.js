@@ -75,7 +75,7 @@ describe('value', () => {
       mockAuth0.mockImplementationOnce(() => ({
         hasExpiredToken: jest.fn().mockReturnValue(hasExpiredTokenResult),
         accessToken,
-        getAccessToken: () => (accessToken ? accessToken : null),
+        getAccessToken: jest.fn(() => (accessToken ? accessToken : null)),
         renewSession: mockRenewSession,
       }));
     };
@@ -163,6 +163,42 @@ describe('value', () => {
       await result.current.handleAuthCallback();
       expect(mockHandleAuthentication).toHaveBeenCalled();
     });
+  });
 
+  describe('getCurrentUserId()', () => {
+    const mockAuth0Implementation = ({ userInfo, hasValidTokenResult }) => {
+      mockAuth0.mockImplementationOnce(() => ({
+        userInfo,
+        getUserId: jest.fn(
+          () => (!!userInfo && !!userInfo.user_id ? userInfo.user_id : null)
+        ),
+        hasValidToken: jest.fn().mockReturnValue(hasValidTokenResult),
+      }));
+    };
+
+    describe('without a valid token', () => {
+      test('returns null', async () => {
+        expect.assertions(1);
+
+        const hasValidTokenResult = false;
+        mockAuth0Implementation({ hasValidTokenResult });
+
+        const result = renderAuthContextProviderHooks();
+        await expect(result.current.getCurrentUserId()).toBe(null);
+      });
+    });
+
+    describe('with a valid token', () => {
+      test('returns the token without calling renewSession', async () => {
+        expect.assertions(1);
+
+        const userInfo = { user_id: '456' };
+        const hasValidTokenResult = true;
+        mockAuth0Implementation({ hasValidTokenResult, userInfo });
+
+        const result = renderAuthContextProviderHooks();
+        await expect(result.current.getCurrentUserId()).toBe('456');
+      });
+    });
   });
 });

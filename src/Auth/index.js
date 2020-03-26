@@ -1,1 +1,1 @@
-export { useAuthContext, AuthContextProvider } from './hooks';
+export { AuthContext, useAuthContext, AuthContextProvider } from './hooks';
