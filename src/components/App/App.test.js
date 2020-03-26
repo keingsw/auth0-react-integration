@@ -4,6 +4,13 @@ import { createMemoryHistory } from 'history';
 import { render, getByTestId, getAllByTestId } from '@testing-library/react';
 import App from './App';
 
+jest.mock('components/Callback', () => {
+  return {
+    __esModule: true,
+    default: () => <div data-testid="callback-component" />,
+  };
+});
+
 const renderAppWithRouter = (route = '/') => {
   const history = createMemoryHistory();
   history.push(route);
