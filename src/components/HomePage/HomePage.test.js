@@ -1,11 +1,5 @@
 import React from 'react';
-import {
-  render,
-  fireEvent,
-  act,
-  waitFor,
-  waitForElementToBeRemoved,
-} from '@testing-library/react';
+import { render, fireEvent, act, waitFor } from '@testing-library/react';
 import { AuthContext } from 'Auth';
 import HomePage from './HomePage';
 
