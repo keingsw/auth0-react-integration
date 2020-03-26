@@ -68,9 +68,12 @@ describe('value', () => {
   describe('getCurrentToken()', () => {
     const mockRenewSession = jest.fn();
 
-    const mockAuth0Implementation = ({ hasExpiredToken, accessToken }) => {
+    const mockAuth0Implementation = ({
+      hasExpiredTokenResult,
+      accessToken,
+    }) => {
       mockAuth0.mockImplementationOnce(() => ({
-        hasExpiredToken,
+        hasExpiredToken: jest.fn().mockReturnValue(hasExpiredTokenResult),
         accessToken,
         getAccessToken: () => (accessToken ? accessToken : null),
         renewSession: mockRenewSession,
@@ -85,8 +88,8 @@ describe('value', () => {
       test('returns null without calling renewSession', async () => {
         expect.assertions(2);
 
-        const hasExpiredToken = () => false;
-        mockAuth0Implementation({ hasExpiredToken });
+        const hasExpiredTokenResult = false;
+        mockAuth0Implementation({ hasExpiredTokenResult });
 
         const result = renderAuthContextProviderHooks();
         await expect(result.current.getCurrentToken()).resolves.toBe(null);
@@ -99,8 +102,8 @@ describe('value', () => {
         expect.assertions(2);
 
         const accessToken = '456';
-        const hasExpiredToken = () => false;
-        mockAuth0Implementation({ hasExpiredToken, accessToken });
+        const hasExpiredTokenResult = false;
+        mockAuth0Implementation({ hasExpiredTokenResult, accessToken });
 
         const result = renderAuthContextProviderHooks();
         await expect(result.current.getCurrentToken()).resolves.toBe('456');
@@ -113,8 +116,8 @@ describe('value', () => {
         expect.assertions(2);
 
         const accessToken = '456';
-        const hasExpiredToken = () => true;
-        mockAuth0Implementation({ hasExpiredToken, accessToken });
+        const hasExpiredTokenResult = true;
+        mockAuth0Implementation({ hasExpiredTokenResult, accessToken });
 
         const result = renderAuthContextProviderHooks();
         await expect(result.current.getCurrentToken()).resolves.toBe('456');
