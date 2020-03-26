@@ -45,7 +45,7 @@ export const AuthContextProvider = ({ children, ...props }) => {
   };
 
   const handleAuthCallback = async () => {
-    auth.handleAuthentication();
+    return await auth.handleAuthentication();
   };
 
   return (
