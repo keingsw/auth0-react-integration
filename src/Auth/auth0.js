@@ -110,9 +110,7 @@ export default class Auth0 {
   }
 
   getUserId() {
-    return !!this.userInfo && !!this.userInfo.user_id
-      ? this.userInfo.user_id
-      : null;
+    return !!this.userInfo && !!this.userInfo.sub ? this.userInfo.sub : null;
   }
 
   getPermissions() {

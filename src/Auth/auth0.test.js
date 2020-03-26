@@ -496,7 +496,7 @@ describe('Auth0', () => {
 
     describe('getUserId()', () => {
       test('returns the user_id from userInfo', () => {
-        mutableAuth0.userInfo = { email: 'test@example.com', user_id: 'xyz' };
+        mutableAuth0.userInfo = { email: 'test@example.com', sub: 'xyz' };
         expect(mutableAuth0.getUserId()).toBe('xyz');
       });
       test('returns null when there is no userInfo', () => {
