@@ -60,31 +60,35 @@ const setUpFailedCase = () => {
   };
 };
 
-console.error = jest.fn();
-
-test('renders without crash', () => {
-  const wrapper = setUpSuccessfulCase();
-  expect(wrapper.getByTestId('callback-component')).toBeInTheDocument();
-});
-
-test('redirects to homepage after successfully handled', () => {
-  const { mockHandleAuthCallback, history } = setUpSuccessfulCase();
-  expect(history.location.pathname).toBe('/callback');
-  waitFor(() => {
-    expect(mockHandleAuthCallback).resolves.toBeTruethy();
-    expect(console.error).not.toHaveBeenCalled();
-    expect(history.location.pathname).toBe('/');
+describe('Callback component', () => {
+  test('renders without crash', () => {
+    const wrapper = setUpSuccessfulCase();
+    expect(wrapper.getByTestId('callback-component')).toBeInTheDocument();
   });
-});
 
-test('logs an error and does not redirect when failed to parse the token', () => {
-  const { mockHandleAuthCallback, history } = setUpFailedCase();
-  expect(history.location.pathname).toBe('/callback');
-  waitFor(() => {
-    expect(mockHandleAuthCallback).rejects.toEqual({
-      error: 'something went wrong',
-    });
-    expect(console.error).toHaveBeenCalled();
+  test('redirects to homepage after successfully handled', () => {
+    const { mockHandleAuthCallback, history } = setUpSuccessfulCase();
+    console.error = jest.fn();
+
     expect(history.location.pathname).toBe('/callback');
+    waitFor(() => {
+      expect(mockHandleAuthCallback).resolves.toBeTruethy();
+      expect(console.error).not.toHaveBeenCalled();
+      expect(history.location.pathname).toBe('/');
+    });
+  });
+
+  test('logs an error and does not redirect when failed to parse the token', () => {
+    const { mockHandleAuthCallback, history } = setUpFailedCase();
+    console.error = jest.fn();
+
+    expect(history.location.pathname).toBe('/callback');
+    waitFor(() => {
+      expect(mockHandleAuthCallback).rejects.toEqual({
+        error: 'something went wrong',
+      });
+      expect(console.error).toHaveBeenCalled();
+      expect(history.location.pathname).toBe('/callback');
+    });
   });
 });

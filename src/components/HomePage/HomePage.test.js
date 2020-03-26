@@ -3,96 +3,99 @@ import { render, fireEvent, act, waitFor } from '@testing-library/react';
 import { AuthContext } from 'Auth';
 import HomePage from './HomePage';
 
-describe('HomePage', () => {
-  const mockLogin = jest.fn();
-  const mockLogout = jest.fn();
-  const mockGetCurrentToken = jest.fn().mockResolvedValue();
-  const mockGetCurrentUserId = jest.fn().mockReturnValue();
+describe('HomePage component', () => {
+  const setUp = async (options = {}) => {
+    const {
+      mockLogin = jest.fn(),
+      mockLogout = jest.fn(),
+      mockGetCurrentToken = jest.fn().mockResolvedValue(),
+      mockGetCurrentUserId = jest.fn().mockReturnValue(),
+    } = options;
+    let wrapper;
+    await act(async () => {
+      wrapper = render(
+        <WrappedHomePage
+          login={mockLogin}
+          logout={mockLogout}
+          getCurrentToken={mockGetCurrentToken}
+          getCurrentUserId={mockGetCurrentUserId}
+        />
+      );
+    });
+
+    return {
+      ...wrapper,
+      mockLogin,
+      mockLogout,
+      mockGetCurrentToken,
+      mockGetCurrentUserId,
+    };
+  };
+
+  const setUpNoValidTokenCase = async () => {
+    const mockGetCurrentToken = jest.fn().mockResolvedValue(null);
+    const reuslt = await setUp({ mockGetCurrentToken });
+    return { ...reuslt };
+  };
+
+  const setUpValidTokenCase = async () => {
+    const mockGetCurrentToken = jest.fn().mockResolvedValue('abc');
+    const mockGetCurrentUserId = jest.fn().mockReturnValue('456');
+    const result = await setUp({ mockGetCurrentToken, mockGetCurrentUserId });
+    return { ...result };
+  };
 
   const WrappedHomePage = ({
-    login = mockLogin,
-    logout = mockLogout,
-    getCurrentToken = mockGetCurrentToken,
-    getCurrentUserId = mockGetCurrentUserId,
+    login,
+    logout,
+    getCurrentToken,
+    getCurrentUserId,
   }) => {
     return (
       <AuthContext.Provider
-        value={{
-          login,
-          logout,
-          getCurrentToken,
-          getCurrentUserId,
-        }}
+        value={{ login, logout, getCurrentToken, getCurrentUserId }}
       >
         <HomePage />
       </AuthContext.Provider>
     );
   };
 
-  beforeEach(() => {
-    mockLogin.mockClear();
-    mockLogout.mockClear();
-    mockGetCurrentToken.mockClear();
-    mockGetCurrentUserId.mockClear();
-  });
-
   test('renders without crash', async () => {
-    let wrapper;
-    act(() => {
-      wrapper = render(<WrappedHomePage />);
-    });
+    const { getByTestId } = await setUp();
     await waitFor(() =>
-      expect(wrapper.getByTestId('homepage-component')).toBeInTheDocument()
+      expect(getByTestId('homepage-component')).toBeInTheDocument()
     );
   });
 
   describe('when there is no valid token', () => {
-    let wrapper;
-    beforeEach(() => {
-      const mockGetCurrentToken = jest.fn().mockResolvedValue(null);
-      act(() => {
-        wrapper = render(
-          <WrappedHomePage getCurrentToken={mockGetCurrentToken} />
-        );
-      });
-    });
-
     test('renders login button', async () => {
-      await waitFor(() => expect(wrapper.getByText(/login/i)).toBeTruthy());
+      const { getByText } = await setUpNoValidTokenCase();
+      await waitFor(() => expect(getByText(/login/i)).toBeTruthy());
     });
     test('does not render logout button', async () => {
-      await waitFor(() => expect(wrapper.queryByText(/logout/i)).toBeNull());
+      const { queryByText } = await setUpNoValidTokenCase();
+      await waitFor(() => expect(queryByText(/logout/i)).toBeNull());
     });
     test('does not render user info', async () => {
+      const { queryByTestId } = await setUpNoValidTokenCase();
       await waitFor(() =>
-        expect(wrapper.queryByTestId('user-info-component')).toBeNull()
+        expect(queryByTestId('user-info-component')).toBeNull()
       );
     });
   });
 
   describe('when there is a valid token', () => {
-    let wrapper;
-    beforeEach(async () => {
-      const mockGetCurrentToken = jest.fn().mockResolvedValue('abc');
-      const mockGetCurrentUserId = jest.fn().mockReturnValue('456');
-      await act(async () => {
-        wrapper = await render(
-          <WrappedHomePage
-            getCurrentToken={mockGetCurrentToken}
-            getCurrentUserId={mockGetCurrentUserId}
-          />
-        );
-      });
-    });
-
     test('renders logout button', async () => {
-      await waitFor(() => expect(wrapper.getByText(/logout/i)).toBeTruthy());
+      const { getByText } = await setUpValidTokenCase();
+      await waitFor(() => expect(getByText(/logout/i)).toBeTruthy());
     });
     test('does not render login button', async () => {
-      await waitFor(() => expect(wrapper.queryByText(/login/i)).toBeNull());
+      const { queryByText } = await setUpValidTokenCase();
+      await waitFor(() => expect(queryByText(/login/i)).toBeNull());
     });
     test('renders user info', async () => {
-      const userInfoComponent = wrapper.getByTestId('user-info-component');
+      const { getByTestId } = await setUpValidTokenCase();
+      const userInfoComponent = getByTestId('user-info-component');
       await waitFor(() => {
         expect(userInfoComponent).toBeTruthy();
         expect(userInfoComponent.textContent).toBe('user_id: 456');
@@ -101,38 +104,28 @@ describe('HomePage', () => {
   });
 
   describe('login button', () => {
-    let wrapper;
-    beforeEach(() => {
-      const mockGetCurrentToken = jest.fn().mockResolvedValue(null);
+    test('calls login() from AuthContext', async () => {
+      const { getByText, mockLogin } = await setUpNoValidTokenCase();
+      const loginButton = getByText(/login/i);
       act(() => {
-        wrapper = render(
-          <WrappedHomePage getCurrentToken={mockGetCurrentToken} />
-        );
+        fireEvent.click(loginButton);
       });
-    });
 
-    test('calls login() from AuthContext', () => {
-      const loginButton = wrapper.getByText(/login/i);
-      fireEvent.click(loginButton);
-      expect(mockLogin).toHaveBeenCalled();
+      await waitFor(() => {
+        expect(mockLogin).toHaveBeenCalled();
+      });
     });
   });
 
   describe('logout button', () => {
-    let wrapper;
-    beforeEach(async () => {
-      const mockGetCurrentToken = jest.fn().mockResolvedValue('abc');
-      await act(async () => {
-        wrapper = render(
-          <WrappedHomePage getCurrentToken={mockGetCurrentToken} />
-        );
-      });
-    });
-
-    test('calls logout() from AuthContext', () => {
-      const logoutButton = wrapper.getByText(/logout/i);
+    test('calls logout() from AuthContext', async () => {
+      const { getByText, mockLogout } = await setUpValidTokenCase();
+      const logoutButton = getByText(/logout/i);
       fireEvent.click(logoutButton);
-      expect(mockLogout).toHaveBeenCalled();
+
+      await waitFor(() => {
+        expect(mockLogout).toHaveBeenCalled();
+      });
     });
   });
 });

@@ -1,6 +1,6 @@
 import React from 'react';
 import { render } from '@testing-library/react';
-import { renderHook, act } from '@testing-library/react-hooks';
+import { renderHook } from '@testing-library/react-hooks';
 import Auth0 from './auth0';
 import { AuthContextProvider, useAuthContext } from './hooks';
 
@@ -22,8 +22,6 @@ const config = {
   scope,
 };
 
-const mockAuth0 = Auth0;
-
 const renderAuthContextProvider = () => {
   return render(<AuthContextProvider {...config}>Hello</AuthContextProvider>);
 };
@@ -37,14 +35,37 @@ const renderAuthContextProviderHooks = () => {
   return result;
 };
 
-describe('Auth0ContextProvider', () => {
-  let wrapper;
-  beforeEach(() => {
-    mockAuth0.mockClear();
-    wrapper = renderAuthContextProvider();
-  });
+const setUp = () => {
+  const mockAuth0 = Auth0;
+  mockAuth0.mockClear();
 
+  const wrapper = render(
+    <AuthContextProvider {...config}>Hello</AuthContextProvider>
+  );
+  return { ...wrapper, mockAuth0 };
+};
+
+const setUpHooks = mockAuth0Implementation => {
+  const mockAuth0 = Auth0;
+  mockAuth0.mockClear();
+  if (!!mockAuth0Implementation) {
+    mockAuth0.mockImplementationOnce(() => ({
+      ...mockAuth0Implementation,
+    }));
+  }
+
+  const wrapper = ({ children }) =>
+    <AuthContextProvider {...config}>
+      {children}
+    </AuthContextProvider>;
+  const { result } = renderHook(() => useAuthContext(), { wrapper });
+
+  return { ...result, mockAuth0 };
+};
+
+describe('Auth0ContextProvider', () => {
   test('initializes an Auth0 instance', () => {
+    const { mockAuth0 } = setUp();
     expect(mockAuth0).toHaveBeenCalledWith({
       audience,
       domain,
@@ -56,32 +77,22 @@ describe('Auth0ContextProvider', () => {
   });
 
   test('renders with children', () => {
-    expect(wrapper.getByText('Hello'));
+    const { getByText } = setUp();
+    expect(getByText('Hello'));
   });
 });
 
 describe('value', () => {
-  beforeEach(() => {
-    mockAuth0.mockClear();
-  });
-
   describe('getCurrentToken()', () => {
     const mockRenewSession = jest.fn();
-
-    const mockAuth0Implementation = ({
+    const getMockAuth0Implementation = ({
       hasExpiredTokenResult,
       accessToken,
-    }) => {
-      mockAuth0.mockImplementationOnce(() => ({
-        hasExpiredToken: jest.fn().mockReturnValue(hasExpiredTokenResult),
-        accessToken,
-        getAccessToken: jest.fn(() => (accessToken ? accessToken : null)),
-        renewSession: mockRenewSession,
-      }));
-    };
-
-    beforeEach(() => {
-      mockRenewSession.mockClear();
+    }) => ({
+      hasExpiredToken: jest.fn().mockReturnValue(hasExpiredTokenResult),
+      accessToken,
+      getAccessToken: jest.fn(() => (accessToken ? accessToken : null)),
+      renewSession: mockRenewSession,
     });
 
     describe('without a token', () => {
@@ -89,10 +100,11 @@ describe('value', () => {
         expect.assertions(2);
 
         const hasExpiredTokenResult = false;
-        mockAuth0Implementation({ hasExpiredTokenResult });
-
-        const result = renderAuthContextProviderHooks();
-        await expect(result.current.getCurrentToken()).resolves.toBe(null);
+        const mockAuth0Implementation = getMockAuth0Implementation({
+          hasExpiredTokenResult,
+        });
+        const { current } = setUpHooks(mockAuth0Implementation);
+        await expect(current.getCurrentToken()).resolves.toBe(null);
         expect(mockRenewSession).not.toHaveBeenCalled();
       });
     });
@@ -103,10 +115,13 @@ describe('value', () => {
 
         const accessToken = '456';
         const hasExpiredTokenResult = false;
-        mockAuth0Implementation({ hasExpiredTokenResult, accessToken });
+        const mockAuth0Implementation = getMockAuth0Implementation({
+          hasExpiredTokenResult,
+          accessToken,
+        });
 
-        const result = renderAuthContextProviderHooks();
-        await expect(result.current.getCurrentToken()).resolves.toBe('456');
+        const { current } = setUpHooks(mockAuth0Implementation);
+        await expect(current.getCurrentToken()).resolves.toBe('456');
         expect(mockRenewSession).not.toHaveBeenCalled();
       });
     });
@@ -117,74 +132,73 @@ describe('value', () => {
 
         const accessToken = '456';
         const hasExpiredTokenResult = true;
-        mockAuth0Implementation({ hasExpiredTokenResult, accessToken });
+        const mockAuth0Implementation = getMockAuth0Implementation({
+          hasExpiredTokenResult,
+          accessToken,
+        });
 
-        const result = renderAuthContextProviderHooks();
-        await expect(result.current.getCurrentToken()).resolves.toBe('456');
+        const { current } = setUpHooks(mockAuth0Implementation);
+        await expect(current.getCurrentToken()).resolves.toBe('456');
         expect(mockRenewSession).toHaveBeenCalled();
       });
     });
   });
 
   describe('login()', () => {
-    const mockLogin = jest.fn();
     test('performs auth login', async () => {
-      mockAuth0.mockImplementationOnce(() => ({
+      const mockLogin = jest.fn();
+      const { current } = setUpHooks({
         login: mockLogin,
-      }));
-      const result = renderAuthContextProviderHooks();
-      await result.current.login();
+      });
+      await current.login();
       expect(mockLogin).toHaveBeenCalled();
     });
   });
 
   describe('logout()', () => {
-    const mockLogout = jest.fn();
     test('performs auth login', async () => {
-      mockAuth0.mockImplementationOnce(() => ({
+      const mockLogout = jest.fn();
+      const { current } = setUpHooks({
         logout: mockLogout,
-      }));
-      const result = renderAuthContextProviderHooks();
-      await result.current.logout();
+      });
+      await current.logout();
       expect(mockLogout).toHaveBeenCalled();
     });
   });
 
   describe('handleAuthentication()', () => {
-    const mockHandleAuthentication = jest.fn();
-
     test('performs handleAuthentication', async () => {
-      mockAuth0.mockImplementationOnce(() => ({
+      const mockHandleAuthentication = jest.fn();
+      const { current } = setUpHooks({
         handleAuthentication: mockHandleAuthentication,
         userInfo: { user_id: 'xyz' },
-      }));
-      const result = renderAuthContextProviderHooks();
+      });
 
-      await result.current.handleAuthCallback();
+      await current.handleAuthCallback();
       expect(mockHandleAuthentication).toHaveBeenCalled();
     });
   });
 
   describe('getCurrentUserId()', () => {
-    const mockAuth0Implementation = ({ userInfo, hasValidTokenResult }) => {
-      mockAuth0.mockImplementationOnce(() => ({
-        userInfo,
-        getUserId: jest.fn(
-          () => (!!userInfo && !!userInfo.user_id ? userInfo.user_id : null)
-        ),
-        hasValidToken: jest.fn().mockReturnValue(hasValidTokenResult),
-      }));
-    };
+    const getMockAuth0Implementation = ({ userInfo, hasValidTokenResult }) => ({
+      userInfo,
+      getUserId: jest.fn(
+        () => (!!userInfo && !!userInfo.sub ? userInfo.sub : null)
+      ),
+      hasValidToken: jest.fn().mockReturnValue(hasValidTokenResult),
+    });
 
     describe('without a valid token', () => {
       test('returns null', async () => {
         expect.assertions(1);
 
         const hasValidTokenResult = false;
-        mockAuth0Implementation({ hasValidTokenResult });
+        const mockAuth0Implementation = getMockAuth0Implementation({
+          hasValidTokenResult,
+        });
 
-        const result = renderAuthContextProviderHooks();
-        await expect(result.current.getCurrentUserId()).toBe(null);
+        const { current } = setUpHooks(mockAuth0Implementation);
+        await expect(current.getCurrentUserId()).toBe(null);
       });
     });
 
@@ -192,12 +206,15 @@ describe('value', () => {
       test('returns the token without calling renewSession', async () => {
         expect.assertions(1);
 
-        const userInfo = { user_id: '456' };
+        const userInfo = { sub: '456' };
         const hasValidTokenResult = true;
-        mockAuth0Implementation({ hasValidTokenResult, userInfo });
+        const mockAuth0Implementation = getMockAuth0Implementation({
+          hasValidTokenResult,
+          userInfo,
+        });
 
-        const result = renderAuthContextProviderHooks();
-        await expect(result.current.getCurrentUserId()).toBe('456');
+        const { current } = setUpHooks(mockAuth0Implementation);
+        await expect(current.getCurrentUserId()).toBe('456');
       });
     });
   });

@@ -20,6 +20,7 @@ const renderAppWithRouter = (route = '/') => {
     </Router>
   );
 };
+
 test('renders without crash', () => {
   const { getByTestId } = renderAppWithRouter();
   expect(getByTestId('app-component')).toBeInTheDocument();
@@ -27,35 +28,37 @@ test('renders without crash', () => {
 
 describe('routing', () => {
   describe('with route `/`', () => {
-    let wrapper;
-    beforeEach(() => {
-      wrapper = renderAppWithRouter();
-    });
-
+    const setUp = () => {
+      const route = '/';
+      return { ...renderAppWithRouter(route) };
+    };
     test('renders HomePage', () => {
+      const wrapper = setUp();
       const appComponent = wrapper.getByTestId('app-component');
       expect(getByTestId(appComponent, 'homepage-component'));
     });
 
     test('does not render any other pages', () => {
+      const wrapper = setUp();
       const appComponent = wrapper.getByTestId('app-component');
       expect(getAllByTestId(appComponent, /^.*-component$/).length).toBe(1);
     });
   });
 
   describe('with route `/callback`', () => {
-    let wrapper;
-    beforeEach(() => {
+    const setUp = () => {
       const route = '/callback';
-      wrapper = renderAppWithRouter(route);
-    });
+      return { ...renderAppWithRouter(route) };
+    };
 
     test('renders Callback page', () => {
+      const wrapper = setUp();
       const appComponent = wrapper.getByTestId('app-component');
       expect(getByTestId(appComponent, 'callback-component'));
     });
 
     test('does not render any other pages', () => {
+      const wrapper = setUp();
       const appComponent = wrapper.getByTestId('app-component');
       expect(getAllByTestId(appComponent, /^.*-component$/).length).toBe(1);
     });
